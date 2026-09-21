@@ -1,0 +1,7 @@
+# ローカル(Windows)と Actions(Linux) で改行が行き違うと、
+# 生成物の差分が毎回全行変更に見えてしまうので LF に固定する
+* text=auto eol=lf
+
+# 生成物は GitHub の差分表示から畳んでおく
+output/** linguist-generated=true
+.cache/state.json linguist-generated=true

@@ -1,0 +1,22 @@
+{
+  "name": "github-collection-meter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub のプロフィール実績が次のティアまであと何件かを SVG メーターにする",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "start": "node dist/cli.js",
+    "dev": "node --import tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

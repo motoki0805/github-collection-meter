@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# output/ と .cache/ は Actions が更新してコミットするので ignore しない
+
+# ローカルの見た目確認用
+.preview/

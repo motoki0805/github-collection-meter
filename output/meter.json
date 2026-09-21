@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-09-21T22:05:30.071Z",
+  "user": {
+    "login": "motoki0805",
+    "name": "motoki nanashima"
+  },
+  "note": "GitHub API から算出した推定値です。GitHub 内部のカウントとは差が出ることがあります。",
+  "crossCheck": {
+    "searchMergedPrCount": 20,
+    "scannedMergedPrCount": 19,
+    "matches": false
+  },
+  "achievements": [
+    {
+      "id": "pull-shark",
+      "name": "Pull Shark",
+      "count": 19,
+      "approximate": false,
+      "currentTier": "x2",
+      "nextThreshold": 128,
+      "remaining": 109,
+      "ratio": 0.027
+    },
+    {
+      "id": "pair-extraordinaire",
+      "name": "Pair Extraordinaire",
+      "count": 2,
+      "approximate": false,
+      "currentTier": "x1",
+      "nextThreshold": 10,
+      "remaining": 8,
+      "ratio": 0.111
+    },
+    {
+      "id": "starstruck",
+      "name": "Starstruck",
+      "count": 0,
+      "approximate": false,
+      "currentTier": null,
+      "nextThreshold": 16,
+      "remaining": 16,
+      "ratio": 0
+    },
+    {
+      "id": "galaxy-brain",
+      "name": "Galaxy Brain",
+      "count": 0,
+      "approximate": false,
+      "currentTier": null,
+      "nextThreshold": 2,
+      "remaining": 2,
+      "ratio": 0
+    },
+    {
+      "id": "quickdraw",
+      "name": "Quickdraw",
+      "count": 1,
+      "approximate": false,
+      "currentTier": "x1",
+      "nextThreshold": null,
+      "remaining": null,
+      "ratio": 1
+    },
+    {
+      "id": "yolo",
+      "name": "YOLO",
+      "count": 5,
+      "approximate": false,
+      "currentTier": "x1",
+      "nextThreshold": null,
+      "remaining": null,
+      "ratio": 1
+    },
+    {
+      "id": "public-sponsor",
+      "name": "Public Sponsor",
+      "count": 1,
+      "approximate": false,
+      "currentTier": "x1",
+      "nextThreshold": null,
+      "remaining": null,
+      "ratio": 1
+    }
+  ]
+}

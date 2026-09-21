@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="179.82" height="20" viewBox="0 0 179.82 20" role="img" aria-label="Pull Shark ×2: あと 109 PR">
+  <title>Pull Shark ×2: あと 109 PR</title>
+  <clipPath id="r"><rect width="179.82" height="20" rx="3"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="98.22" height="20" fill="#24292f"/>
+    <rect x="98.22" width="81.6" height="20" fill="#0969da"/>
+  </g>
+  <g transform="translate(6 4) scale(0.75)"><path fill="#ffffff" d="M8 1.2c3.1 2.6 5.2 6.3 5.7 10.9-1.7-1.1-3.4-1.6-5.7-1.6s-4 .5-5.7 1.6C2.8 7.5 4.9 3.8 8 1.2Z M1.2 13.4c1.2 0 1.8.9 3 .9s1.8-.9 3-.9 1.8.9 3 .9 1.8-.9 3-.9v1.4c-1.2 0-1.8.9-3 .9s-1.8-.9-3-.9-1.8.9-3 .9-1.8-.9-3-.9Z"/></g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', Helvetica, Arial, sans-serif" font-size="11" fill="#ffffff">
+    <text x="22" y="14">Pull Shark ×2</text>
+    <text x="106.22" y="14">あと 109 PR</text>
+  </g>
+</svg>

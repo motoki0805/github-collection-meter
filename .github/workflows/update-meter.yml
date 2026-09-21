@@ -1,0 +1,55 @@
+name: Update meter
+
+on:
+  schedule:
+    # 03:00 JST (18:00 UTC)
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: キャッシュを無視して全走査する
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# 同時に走ると output のコミットが衝突するので直列化する
+concurrency:
+  group: update-meter
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: メーターを生成
+        env:
+          # PERSONAL_TOKEN があればそちらを使う。無ければ Actions 既定のトークン。
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # GITHUB_TOKEN の持ち主は github-actions[bot] なので、
+          # 対象ユーザーは必ず明示する必要がある
+          node dist/cli.js --user "${{ github.repository_owner }}" ${{ inputs.full && '--full' || '' }}
+
+      - name: 変更があればコミット
+        run: |
+          if [ -z "$(git status --porcelain output .cache)" ]; then
+            echo "変更なし"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output .cache
+          git commit -m "chore: 実績メーターを更新 [skip ci]"
+          git push
