@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-09-22T18:22:59.500Z",
+  "generatedAt": "2026-09-23T18:22:25.985Z",
   "user": {
     "login": "motoki0805",
     "name": "motoki nanashima"
   },
   "note": "GitHub API から算出した推定値です。GitHub 内部のカウントとは差が出ることがあります。",
   "crossCheck": {
-    "searchMergedPrCount": 20,
-    "scannedMergedPrCount": 19,
+    "searchMergedPrCount": 21,
+    "scannedMergedPrCount": 20,
     "matches": false
   },
   "achievements": [
     {
       "id": "pull-shark",
       "name": "Pull Shark",
-      "count": 19,
+      "count": 20,
       "approximate": false,
       "currentTier": "x2",
       "nextThreshold": 128,
-      "remaining": 109,
-      "ratio": 0.027
+      "remaining": 108,
+      "ratio": 0.036
     },
     {
       "id": "pair-extraordinaire",
@@ -64,7 +64,7 @@
     {
       "id": "yolo",
       "name": "YOLO",
-      "count": 5,
+      "count": 6,
       "approximate": false,
       "currentTier": "x1",
       "nextThreshold": null,
