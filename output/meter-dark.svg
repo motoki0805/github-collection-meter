@@ -8,12 +8,12 @@
   <text class="subtitle" x="440" y="51" text-anchor="end">更新 2026-10-03</text>
   <g transform="translate(20 74) scale(1.125)"><path class="icon" d="M8 1.2c3.1 2.6 5.2 6.3 5.7 10.9-1.7-1.1-3.4-1.6-5.7-1.6s-4 .5-5.7 1.6C2.8 7.5 4.9 3.8 8 1.2Z M1.2 13.4c1.2 0 1.8.9 3 .9s1.8-.9 3-.9 1.8.9 3 .9 1.8-.9 3-.9v1.4c-1.2 0-1.8.9-3 .9s-1.8-.9-3-.9-1.8.9-3 .9-1.8-.9-3-.9Z"/></g>
   <text class="name" x="48" y="86">Pull Shark<tspan class="tier" dx="6">×2</tspan></text>
-  <text x="440" y="86" text-anchor="end"><tspan class="count">61 / 128</tspan><tspan class="remaining" dx="8">あと 67 PR</tspan></text>
-  <rect class="track" x="48" y="93" width="392" height="6" rx="3"/><rect class="fill" x="48" y="93" width="157.5" height="6" rx="3"/>
+  <text x="440" y="86" text-anchor="end"><tspan class="count">84 / 128</tspan><tspan class="remaining" dx="8">あと 44 PR</tspan></text>
+  <rect class="track" x="48" y="93" width="392" height="6" rx="3"/><rect class="fill" x="48" y="93" width="238" height="6" rx="3"/>
   <g transform="translate(20 114) scale(1.125)"><path class="icon" d="M5.6 7.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Z M11 7.2a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2Z M.8 14.2c0-2.7 2.1-4.9 4.8-4.9s4.8 2.2 4.8 4.9Z M11.3 8.6c2.2 0 3.9 1.9 3.9 4.6h-3.4c0-1.8-.5-3.4-1.4-4.5.3-.1.6-.1.9-.1Z"/></g>
-  <text class="name" x="48" y="126">Pair Extraordinaire</text>
-  <text x="440" y="126" text-anchor="end"><tspan class="count">7 / 10</tspan><tspan class="remaining" dx="8">あと 3 PR</tspan></text>
-  <rect class="track" x="48" y="133" width="392" height="6" rx="3"/><rect class="fill" x="48" y="133" width="261.33" height="6" rx="3"/>
+  <text class="name" x="48" y="126">Pair Extraordinaire<tspan class="tier" dx="6">×2</tspan></text>
+  <text x="440" y="126" text-anchor="end"><tspan class="count">17 / 24</tspan><tspan class="remaining" dx="8">あと 7 PR</tspan></text>
+  <rect class="track" x="48" y="133" width="392" height="6" rx="3"/><rect class="fill" x="48" y="133" width="196" height="6" rx="3"/>
   <g transform="translate(20 154) scale(1.125)"><path class="icon locked" d="M8 1.1 10 5.2l4.5.7-3.3 3.2.8 4.5L8 11.4l-4 2.2.8-4.5L1.5 5.9l4.5-.7Z"/></g>
   <text class="name" x="48" y="166">Starstruck</text>
   <text x="440" y="166" text-anchor="end"><tspan class="count">0 / 16</tspan><tspan class="remaining" dx="8">あと 16 スター</tspan></text>
