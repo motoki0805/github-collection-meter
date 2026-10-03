@@ -29,6 +29,7 @@ const USAGE = [
   '  --full             キャッシュを無視して全走査する',
   '  --theme <name>     統合カードの既定テーマ auto|light|dark (既定: auto)',
   '  --no-avatar        アバターを埋め込まない',
+  '  --include-private  private の活動も実績に数える (repo スコープのトークンが必要)',
   '  --quiet            進捗ログを出さない',
   '  --help             このヘルプ',
   '',
@@ -45,6 +46,7 @@ async function main(): Promise<void> {
       full: { type: 'boolean', default: false },
       theme: { type: 'string', default: 'auto' },
       'no-avatar': { type: 'boolean', default: false },
+      'include-private': { type: 'boolean', default: false },
       quiet: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
     },
@@ -60,6 +62,10 @@ async function main(): Promise<void> {
   const config = await loadConfig(resolve(values.config));
   const theme = normalizeTheme(values.theme);
 
+  // GitHub の「Include private contributions on my profile」を有効にしていると
+  // 実績にも private の活動が含まれる。設定ファイルかフラグで合わせる。
+  const includePrivate = config.includePrivate || values['include-private'];
+
   const client = createClient({ token, log });
   const login = await resolveLogin(client, values.user ?? config.username);
   if (login.endsWith('[bot]')) {
@@ -73,15 +79,25 @@ async function main(): Promise<void> {
 
   const cachePath = resolve(values.cache);
   const state = await loadState(cachePath, login);
-  const profile = await fetchProfile(client, login);
+  const profile = await fetchProfile(client, login, includePrivate);
+  log?.(includePrivate ? '集計範囲: public + private' : '集計範囲: public のみ');
 
   const achievements = config.achievements.map(getAchievement);
   if (achievements.some((a) => a.needsScan)) {
     await scanMergedPullRequests(client, login, state, { full: values.full, log });
-    await ensureQuickdraw(client, login, state, { full: values.full, log });
+    await ensureQuickdraw(client, login, state, { full: values.full, includePrivate, log });
   }
 
-  const progresses = measureAll(config.achievements, profile, state);
+  if (includePrivate && !Object.values(state.prs).some((pr) => !pr.isPublic)) {
+    // 設定上は private も数えるのに1件も見えていない。トークンに repo スコープが
+    // 無いとこの状態になり、黙って少ない数字が出続けるので警告する。
+    log?.(
+      '警告: private を数える設定ですが、private の PR が1件も見つかりませんでした。' +
+        'トークンに repo スコープが無い可能性があります。',
+    );
+  }
+
+  const progresses = measureAll(config.achievements, profile, state, includePrivate);
   const rows: MeterRow[] = achievements.map((achievement, index) => ({
     achievement,
     progress: progresses[index] as Progress,
@@ -112,7 +128,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const json = toJson(profile, generatedAt, rows);
+  const json = toJson(profile, generatedAt, rows, includePrivate);
   await write(join(outDir, 'meter.json'), `${JSON.stringify(json, null, 2)}\n`);
   await saveState(cachePath, state);
 
@@ -129,12 +145,18 @@ async function main(): Promise<void> {
   }
 }
 
-function toJson(profile: ProfileData, generatedAt: Date, rows: readonly MeterRow[]): unknown {
+function toJson(
+  profile: ProfileData,
+  generatedAt: Date,
+  rows: readonly MeterRow[],
+  includePrivate: boolean,
+): unknown {
   const scanned = rows.find((r) => r.achievement.id === 'pull-shark')?.progress.count ?? null;
   return {
     generatedAt: generatedAt.toISOString(),
     user: { login: profile.login, name: profile.name },
     note: 'GitHub API から算出した推定値です。GitHub 内部のカウントとは差が出ることがあります。',
+    includePrivate,
     // 検索インデックスは Bot が作った PR も author: で拾うことがあるので、
     // 走査で数えた件数と食い違うことがある。差が出たときに気づけるよう残しておく。
     crossCheck: {

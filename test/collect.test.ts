@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 
 import { emptyState } from '../src/cache/state.js';
-import { ensureQuickdraw, isQuickdraw, scanMergedPullRequests } from '../src/github/collect.js';
+import {
+  closedWithin5Minutes,
+  ensureQuickdraw,
+  scanMergedPullRequests,
+} from '../src/github/collect.js';
 import { createClient } from '../src/github/graphql.js';
 import { PR_PAGE_SIZE } from '../src/github/queries.js';
 
@@ -159,14 +163,11 @@ describe('scanMergedPullRequests', () => {
     assert.deepEqual(Object.keys(full.prs).sort(), Object.keys(incremental.prs).sort());
   });
 
-  it('共著コミットを記録し、private リポジトリの PR は保存しない', async () => {
-    // キャッシュは public リポジトリにコミットされるので、
-    // 非公開のリポジトリ名や PR 番号が混ざらないようにする
+  it('共著コミットを記録する', async () => {
     stubGitHub({
       prs: [
         { id: 'PR_solo', updatedAt: '2024-01-03T00:00:00Z', authorCounts: [1, 1] },
         { id: 'PR_pair', updatedAt: '2024-01-02T00:00:00Z', authorCounts: [1, 2] },
-        { id: 'PR_private', updatedAt: '2024-01-01T00:00:00Z', isPrivate: true },
       ],
     });
     const state = emptyState(LOGIN);
@@ -174,8 +175,33 @@ describe('scanMergedPullRequests', () => {
 
     assert.equal(state.prs['PR_solo']?.hasCoauthoredCommit, false);
     assert.equal(state.prs['PR_pair']?.hasCoauthoredCommit, true);
-    assert.equal(state.prs['PR_private'], undefined, 'private は保存しない');
-    assert.equal(Object.keys(state.prs).length, 2);
+  });
+
+  it('private の PR は保存するが、リポジトリ名と番号は残さない', async () => {
+    // キャッシュは public リポジトリにコミットされる。集計に使うのは真偽値だけなので、
+    // 非公開のリポジトリ名や PR 番号を落としても件数は正しく数えられる。
+    stubGitHub({
+      prs: [
+        { id: 'PR_public', updatedAt: '2024-01-02T00:00:00Z' },
+        { id: 'PR_private', updatedAt: '2024-01-01T00:00:00Z', isPrivate: true },
+      ],
+    });
+    const state = emptyState(LOGIN);
+    await scanMergedPullRequests(client(), LOGIN, state);
+
+    const pub = state.prs['PR_public'];
+    assert.equal(pub?.isPublic, true);
+    assert.equal(pub?.repo, 'someone/repo');
+    assert.equal(pub?.number, 1);
+
+    const priv = state.prs['PR_private'];
+    assert.ok(priv, 'private も集計対象なので保存する');
+    assert.equal(priv?.isPublic, false);
+    assert.equal(priv?.repo, null, 'リポジトリ名を残さない');
+    assert.equal(priv?.number, null, 'PR 番号を残さない');
+
+    const repoNames = Object.values(state.prs).filter((r) => r.repo !== null);
+    assert.equal(repoNames.length, 1, 'リポジトリ名が残るのは public の1件だけ');
   });
 
   it('コミットを見切れていない PR に打ち切りフラグを立てる', async () => {
@@ -214,7 +240,26 @@ describe('scanMergedPullRequests', () => {
     });
     const state = emptyState(LOGIN);
     await scanMergedPullRequests(client(), LOGIN, state);
-    assert.equal(state.quickdraw, true);
+    assert.equal(state.quickdrawPublic, true);
+    assert.equal(state.quickdrawAny, true);
+  });
+
+  it('private の Quickdraw は quickdrawAny だけを立てる', async () => {
+    stubGitHub({
+      prs: [
+        {
+          id: 'PR_fast_private',
+          updatedAt: '2024-01-02T00:00:00Z',
+          createdAt: '2024-01-02T00:00:00Z',
+          closedAt: '2024-01-02T00:03:00Z',
+          isPrivate: true,
+        },
+      ],
+    });
+    const state = emptyState(LOGIN);
+    await scanMergedPullRequests(client(), LOGIN, state);
+    assert.equal(state.quickdrawAny, true);
+    assert.equal(state.quickdrawPublic, false, 'public だけで見れば未達成');
   });
 });
 
@@ -226,26 +271,25 @@ describe('ensureQuickdraw', () => {
     });
     const state = emptyState(LOGIN);
     await ensureQuickdraw(client(), LOGIN, state);
-    assert.equal(state.quickdraw, true);
+    assert.equal(state.quickdrawPublic, true);
   });
 
   it('既に達成済みなら API を叩かない', async () => {
     const server = stubGitHub({ prs: [], issues: [] });
     const state = emptyState(LOGIN);
-    state.quickdraw = true;
+    state.quickdrawPublic = true;
 
     await ensureQuickdraw(client(), LOGIN, state);
     assert.equal(server.requestCount(), 0);
   });
 });
 
-describe('isQuickdraw', () => {
-  it('public かつ5分以内のときだけ真', () => {
+describe('closedWithin5Minutes', () => {
+  it('5分以内に閉じられているときだけ真', () => {
     const created = '2024-01-01T00:00:00Z';
-    assert.equal(isQuickdraw(true, created, '2024-01-01T00:04:59Z'), true);
-    assert.equal(isQuickdraw(true, created, '2024-01-01T00:05:00Z'), true, '境界はちょうど5分まで');
-    assert.equal(isQuickdraw(true, created, '2024-01-01T00:05:01Z'), false);
-    assert.equal(isQuickdraw(false, created, '2024-01-01T00:01:00Z'), false, 'private は対象外');
-    assert.equal(isQuickdraw(true, created, null), false, '未クローズは対象外');
+    assert.equal(closedWithin5Minutes(created, '2024-01-01T00:04:59Z'), true);
+    assert.equal(closedWithin5Minutes(created, '2024-01-01T00:05:00Z'), true, '境界はちょうど5分まで');
+    assert.equal(closedWithin5Minutes(created, '2024-01-01T00:05:01Z'), false);
+    assert.equal(closedWithin5Minutes(created, null), false, '未クローズは対象外');
   });
 });

@@ -39,11 +39,21 @@ type ProfileResponse = {
   search: { issueCount: number };
 };
 
-/** 1 クエリで取れる実績とプロフィールをまとめて取得する。 */
-export async function fetchProfile(client: GraphQLClient, login: string): Promise<ProfileData> {
+/**
+ * 1 クエリで取れる実績とプロフィールをまとめて取得する。
+ *
+ * includePrivate は「プロフィール設定で private の活動も実績に含めている」場合に true。
+ * 対象の範囲が変わるので、Starstruck のリポジトリ絞り込みと突き合わせ用の検索に効く。
+ */
+export async function fetchProfile(
+  client: GraphQLClient,
+  login: string,
+  includePrivate: boolean,
+): Promise<ProfileData> {
   const data = await client.request<ProfileResponse>(PROFILE_QUERY, {
     login,
-    mergedPrQuery: `is:pr author:${login} is:merged is:public`,
+    mergedPrQuery: `is:pr author:${login} is:merged${includePrivate ? '' : ' is:public'}`,
+    privacy: includePrivate ? null : 'PUBLIC',
   });
 
   const user = data.user;
@@ -72,7 +82,10 @@ type PrNode = {
   repository: { nameWithOwner: string; isPrivate: boolean };
   mergedBy: { login: string } | null;
   reviews: { totalCount: number };
-  commits: { totalCount: number; nodes: ({ commit: { authors: { totalCount: number } } } | null)[] | null };
+  commits: {
+    totalCount: number;
+    nodes: ({ commit: { authors: { totalCount: number } } } | null)[] | null;
+  };
 };
 
 type MergedPrsResponse = {
@@ -90,6 +103,9 @@ export type ScanOptions = {
  *
  * UPDATED_AT の降順で辿るので、前回の走査完了時刻より古い PR に到達した時点で
  * 残りはすべて走査済みだと分かる。そこで打ち切ることで2回目以降が軽くなる。
+ *
+ * private の PR も保存するが、リポジトリ名と番号は落とす（PrRecord の説明を参照）。
+ * 集計に含めるかどうかは measure 側で切り替えるので、設定を変えても再走査は要らない。
  */
 export async function scanMergedPullRequests(
   client: GraphQLClient,
@@ -126,11 +142,6 @@ export async function scanMergedPullRequests(
         break;
       }
 
-      // private リポジトリの PR は実績の対象外なので、そもそも保存しない。
-      // キャッシュは public リポジトリにコミットされるため、
-      // 非公開のリポジトリ名や PR 番号を残さないようにしている。
-      if (node.repository.isPrivate) continue;
-
       state.prs[node.id] = toRecord(node, login);
       seen += 1;
     }
@@ -150,14 +161,11 @@ export async function scanMergedPullRequests(
   );
 
   // PR 側で Quickdraw が見つかることもあるので、ここで拾っておく
-  if (!state.quickdraw) {
-    for (const record of Object.values(state.prs)) {
-      if (isQuickdraw(record.isPublic, record.createdAt, record.closedAt)) {
-        state.quickdraw = true;
-        log?.(`Quickdraw 達成を PR ${record.repo}#${record.number} で確認`);
-        break;
-      }
-    }
+  for (const record of Object.values(state.prs)) {
+    if (!closedWithin5Minutes(record.createdAt, record.closedAt)) continue;
+    state.quickdrawAny = true;
+    if (record.isPublic) state.quickdrawPublic = true;
+    if (state.quickdrawPublic) break;
   }
 
   state.complete = true;
@@ -173,11 +181,14 @@ function toRecord(node: PrNode, login: string): PrRecord {
     }
   }
 
+  const isPublic = !node.repository.isPrivate;
+
   return {
     id: node.id,
-    repo: node.repository.nameWithOwner,
-    number: node.number,
-    isPublic: !node.repository.isPrivate,
+    // private はリポジトリ名も番号も残さない
+    repo: isPublic ? node.repository.nameWithOwner : null,
+    number: isPublic ? node.number : null,
+    isPublic,
     createdAt: node.createdAt,
     closedAt: node.closedAt,
     updatedAt: node.updatedAt,
@@ -201,17 +212,22 @@ type ClosedIssuesResponse = {
   user: { issues: { pageInfo: PageInfo; nodes: (IssueNode | null)[] | null } } | null;
 };
 
+export type QuickdrawOptions = ScanOptions & {
+  /** private の活動も実績に数える設定か */
+  includePrivate?: boolean;
+};
+
 /**
  * PR 側で Quickdraw が見つからなかった場合に issue も調べる。
- * 一度達成したら取り消されないので、true になっていれば何もしない。
+ * 一度達成したら取り消されないので、該当するフラグが立っていれば何もしない。
  */
 export async function ensureQuickdraw(
   client: GraphQLClient,
   login: string,
   state: State,
-  { full = false, log }: ScanOptions = {},
+  { full = false, includePrivate = false, log }: QuickdrawOptions = {},
 ): Promise<void> {
-  if (state.quickdraw) return;
+  if (includePrivate ? state.quickdrawAny : state.quickdrawPublic) return;
 
   const canStopEarly = !full && state.complete && state.lastScanAt !== null;
   const cutoffMs = canStopEarly ? Date.parse(state.lastScanAt as string) : null;
@@ -229,12 +245,15 @@ export async function ensureQuickdraw(
     for (const node of connection.nodes ?? []) {
       if (node === null) continue;
       if (cutoffMs !== null && Date.parse(node.updatedAt) < cutoffMs) return;
+      if (!closedWithin5Minutes(node.createdAt, node.closedAt)) continue;
 
-      if (isQuickdraw(!node.repository.isPrivate, node.createdAt, node.closedAt)) {
-        state.quickdraw = true;
-        log?.('Quickdraw 達成を issue で確認');
-        return;
-      }
+      const isPublic = !node.repository.isPrivate;
+      state.quickdrawAny = true;
+      if (isPublic) state.quickdrawPublic = true;
+
+      log?.(`Quickdraw 達成を issue で確認${isPublic ? '' : '（private）'}`);
+      // 求めている側のフラグが立ったら終わり
+      if (includePrivate || isPublic) return;
     }
 
     if (!connection.pageInfo.hasNextPage) return;
@@ -243,13 +262,9 @@ export async function ensureQuickdraw(
   }
 }
 
-/** public かつ、開始から5分以内に閉じられているか。 */
-export function isQuickdraw(
-  isPublic: boolean,
-  createdAt: string,
-  closedAt: string | null,
-): boolean {
-  if (!isPublic || closedAt === null) return false;
+/** 開始から5分以内に閉じられているか。 */
+export function closedWithin5Minutes(createdAt: string, closedAt: string | null): boolean {
+  if (closedAt === null) return false;
   const elapsed = Date.parse(closedAt) - Date.parse(createdAt);
   return Number.isFinite(elapsed) && elapsed >= 0 && elapsed <= QUICKDRAW_WINDOW_MS;
 }

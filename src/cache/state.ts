@@ -3,7 +3,11 @@ import { dirname } from 'node:path';
 
 import type { PrRecord } from '../github/types.js';
 
-export const SCHEMA_VERSION = 1;
+/**
+ * 2: private の PR も（匿名化して）保存するようになり、
+ *    Quickdraw を public のみ / private 込み の2通りで持つようにした
+ */
+export const SCHEMA_VERSION = 2;
 
 export type State = {
   schemaVersion: number;
@@ -15,8 +19,13 @@ export type State = {
   complete: boolean;
   /** 最後に全走査を完了した時刻 (ISO) */
   lastScanAt: string | null;
-  /** Quickdraw は一度達成したら取り消されないので、true になったら焼き付ける */
-  quickdraw: boolean;
+  /**
+   * Quickdraw は一度達成したら取り消されないので、true になったら焼き付ける。
+   * private を数えるかは設定で切り替わるため、2通りを別々に持つ。
+   * quickdrawPublic が true なら quickdrawAny も必ず true。
+   */
+  quickdrawPublic: boolean;
+  quickdrawAny: boolean;
   /** PR の node id をキーにした走査結果 */
   prs: Record<string, PrRecord>;
 };
@@ -27,7 +36,8 @@ export function emptyState(username: string): State {
     username,
     complete: false,
     lastScanAt: null,
-    quickdraw: false,
+    quickdrawPublic: false,
+    quickdrawAny: false,
     prs: {},
   };
 }
@@ -53,7 +63,8 @@ export async function loadState(path: string, username: string): Promise<State> 
       username,
       complete: parsed.complete === true,
       lastScanAt: typeof parsed.lastScanAt === 'string' ? parsed.lastScanAt : null,
-      quickdraw: parsed.quickdraw === true,
+      quickdrawPublic: parsed.quickdrawPublic === true,
+      quickdrawAny: parsed.quickdrawAny === true,
       prs: isRecord(parsed.prs) ? parsed.prs : {},
     };
   } catch {
