@@ -37,7 +37,11 @@ GitHub は獲得済みのバッジは見せてくれるが、次のティアま�
 Heart On Your Sleeve と Open Sourcerer は GitHub 側で無効化されていて閾値も不明なため、
 Arctic Code Vault と Mars 2020 は新規取得できないため、いずれも対象外。
 
-実績は **public リポジトリの活動しか数えない** ので、集計も public に絞っている。
+実績は既定では **public リポジトリの活動しか数えない**。ただしプロフィール設定の
+**Include private contributions on my profile** を有効にしている場合は、private の活動も
+（匿名化された形で）実績に反映される（[公式ドキュメント](https://docs.github.com/en/account-and-profile/reference/profile-reference)）。
+`meter.config.json` の `includePrivate` をその設定に合わせること。有効にするには
+private リポジトリを読めるトークン（`repo` スコープ）が要る。
 
 ## セットアップ
 
@@ -47,10 +51,12 @@ Arctic Code Vault と Mars 2020 は新規取得できないため、いずれも
 3. Actions タブから **Update meter** を `workflow_dispatch` で一度手動実行する
 4. 生成された `output/` の SVG を README から参照する
 
-トークンは Actions 既定の `GITHUB_TOKEN` で足りる。レート制限に余裕が欲しい場合だけ、
-PAT を `PERSONAL_TOKEN` という名前のシークレットに入れると自動でそちらを使う。
-**PAT にスコープは要らない**（public のデータしか読まないため、classic PAT でチェックを
-一つも入れない状態で全7実績が取得できることを確認済み）。
+public だけを数えるなら、トークンは Actions 既定の `GITHUB_TOKEN` で足りる。
+**スコープを一つも付けていない classic PAT でも全7実績が取得できる**ことを確認済み。
+
+`includePrivate` を有効にする場合は、**`repo` スコープを付けた PAT** が必要になる。
+`PERSONAL_TOKEN` という名前のシークレットに入れると、ワークフローが自動でそちらを優先する。
+Organization のリポジトリは、組織側が PAT を制限していると読めないことがある。
 
 > `GITHUB_TOKEN` の持ち主は `github-actions[bot]` なので、対象ユーザーの指定は省略できない。
 > ワークフローでは `--user ${{ github.repository_owner }}` を渡している。
@@ -112,8 +118,10 @@ GITHUB_TOKEN=<your token> node dist/cli.js --user <login>
 | `--full` | off | キャッシュを無視して全走査する |
 | `--theme auto\|light\|dark` | `auto` | `meter.svg` のテーマ |
 | `--no-avatar` | off | アバターを埋め込まない |
+| `--include-private` | off | private の活動も数える（`repo` スコープが必要） |
 
-設定は `meter.config.json` で変えられる（表示する実績と並び順、`locale` の `ja` / `en`、アバターの有無）。
+設定は `meter.config.json` で変えられる（表示する実績と並び順、`locale` の `ja` / `en`、
+アバターの有無、`includePrivate`）。
 
 ## 差分更新について
 
@@ -128,8 +136,12 @@ Quickdraw は一度達成したら取り消されないので、`true` になっ
 キャッシュが壊れたり実績の数え方を変えたときは `--full` で作り直す。
 
 `.cache/state.json` は public リポジトリにコミットされるので、**private リポジトリの PR は
-そもそも保存しない**。実績は public しか数えないので集計には影響しないが、保存すると
-非公開のリポジトリ名と PR 番号が公開リポジトリに載ってしまうため。
+リポジトリ名と PR 番号を保存しない**（`repo` と `number` が `null` になる）。集計に使うのは
+「共著コミットを含むか」「レビューが0件か」といった真偽値だけなので、件数は正しく数えられる。
+GitHub 自身が private の活動を匿名化して実績に反映しているのと同じ方針。
+
+Quickdraw は public 限定と private 込みの2通りを別々にキャッシュしている。
+`includePrivate` を切り替えても再走査が要らないようにするため。
 
 ## 数値の精度
 

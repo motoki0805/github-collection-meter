@@ -24,16 +24,17 @@ export const VIEWER_QUERY = /* GraphQL */ `
  * Pull Shark / Starstruck / Galaxy Brain / Public Sponsor とプロフィール情報。
  */
 export const PROFILE_QUERY = /* GraphQL */ `
-  query Profile($login: String!, $mergedPrQuery: String!) {
+  query Profile($login: String!, $mergedPrQuery: String!, $privacy: RepositoryPrivacy) {
     user(login: $login) {
       login
       name
       avatarUrl(size: 128)
       # Starstruck: 自分が作った public リポジトリのうち最多スター
+      # $privacy が null なら private も含める（実績に private を数える設定のとき）
       repositories(
         ownerAffiliations: [OWNER]
         isFork: false
-        privacy: PUBLIC
+        privacy: $privacy
         orderBy: { field: STARGAZERS, direction: DESC }
         first: 1
       ) {

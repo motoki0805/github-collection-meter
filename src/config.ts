@@ -8,6 +8,12 @@ export type Config = {
   readonly username: string | null;
   readonly locale: Locale;
   readonly avatar: boolean;
+  /**
+   * private の活動も実績に数えるか。
+   * GitHub の「Include private contributions on my profile」設定に合わせる。
+   * 有効にするには private リポジトリを読めるトークン（repo スコープ）が要る。
+   */
+  readonly includePrivate: boolean;
   /** 表示する実績と、その並び順 */
   readonly achievements: readonly AchievementId[];
 };
@@ -16,6 +22,7 @@ export const DEFAULT_CONFIG: Config = {
   username: null,
   locale: 'ja',
   avatar: true,
+  includePrivate: false,
   achievements: [
     'pull-shark',
     'pair-extraordinaire',
@@ -49,6 +56,7 @@ export async function loadConfig(path: string): Promise<Config> {
       typeof parsed.username === 'string' && parsed.username !== '' ? parsed.username : null,
     locale: parsed.locale === 'en' ? 'en' : 'ja',
     avatar: parsed.avatar !== false,
+    includePrivate: parsed.includePrivate === true,
     achievements: achievements.length > 0 ? achievements : DEFAULT_CONFIG.achievements,
   };
 }
