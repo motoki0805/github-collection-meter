@@ -5,10 +5,17 @@ GitHub のプロフィール実績が、次のティアまであと何件かを 
 GitHub は獲得済みのバッジは見せてくれるが、次のティアまでどれだけ残っているかは表示しない。
 これはそのゲージを作って README に貼るためのツール。GitHub Actions が毎日走って `output/` を更新する。
 
-```
-Pull Shark  ×3                    131 / 1,024   あと 893 PR
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/motoki0805/github-collection-meter/main/output/meter-dark.svg">
+  <img
+    src="https://raw.githubusercontent.com/motoki0805/github-collection-meter/main/output/meter-light.svg"
+    alt="GitHub 実績メーター"
+    width="460">
+</picture>
+
+<sub>このリポジトリが毎日自動生成している実物です</sub>
 
 ## 対応している実績
 
