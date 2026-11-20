@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "username": "motoki0805",
   "complete": true,
-  "lastScanAt": "2026-11-19T18:13:51.152Z",
+  "lastScanAt": "2026-11-20T18:13:54.626Z",
   "quickdrawPublic": true,
   "quickdrawAny": true,
   "prs": {
@@ -1730,6 +1730,19 @@
       "createdAt": "2026-11-09T10:42:08Z",
       "closedAt": "2026-11-09T10:42:11Z",
       "updatedAt": "2026-11-09T10:42:12Z",
+      "reviewCount": 0,
+      "mergedByMe": true,
+      "hasCoauthoredCommit": false,
+      "commitsTruncated": false
+    },
+    "PR_kwDOQyNm3c8AAAABQmzz_A": {
+      "id": "PR_kwDOQyNm3c8AAAABQmzz_A",
+      "repo": null,
+      "number": null,
+      "isPublic": false,
+      "createdAt": "2026-11-20T07:16:03Z",
+      "closedAt": "2026-11-20T07:19:46Z",
+      "updatedAt": "2026-11-20T07:19:46Z",
       "reviewCount": 0,
       "mergedByMe": true,
       "hasCoauthoredCommit": false,
